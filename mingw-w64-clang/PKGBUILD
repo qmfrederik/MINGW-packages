@@ -7,6 +7,9 @@
 # Contributor: Oscar Fuentes <ofv@wanadoo.es>
 # Contributor: Adrian Pop <adrian.pop@liu.se>
 
+objc_export_commit_id="958455749a899edd99ddb1ca1834d4956775d305"
+objc_eh_commit_id="6195e6c57b5b461dda2bffec0e5497ceb659f82c"
+
 if [[ $MINGW_PACKAGE_PREFIX == *-clang-* ]]; then
   _clangprefix=1
   _compiler=clang
@@ -70,6 +73,10 @@ source=("${_url}/llvm-${pkgver}.src.tar.xz"{,.sig}
         "0101-link-pthread-with-mingw.patch"
         "0102-Rename-flang-new-flang-experimental-exec-to-flang.patch"
         "0303-ignore-new-bfd-options.patch"
+        # Objective C: Use C++ mode unconditionally on MinGW
+        https://github.com/qmfrederik/llvm-project/commit/${objc_eh_commit_id}.patch
+        # Objective C: Mark instance variable offsets with DllExport/DllImport when targetting COFF
+        https://github.com/qmfrederik/llvm-project/commit/${objc_export_commit_id}.patch
         https://github.com/llvm/llvm-project/commit/10b78cc8cea65e7e77d227af4027963f39402724.patch
         https://github.com/llvm/llvm-project/commit/1709e8c656de69f6d823a3ae6773bf815e373909.patch
         https://github.com/llvm/llvm-project/commit/9e3d915d8ebf86e24c9ff58766be8e7c6aa7b0c0.patch)
@@ -100,6 +107,8 @@ sha256sums=('b638167da139126ca11917b6880207cc6e8f9d1cbb1a48d87d017f697ef78188'
             '715cb8862753854b2d9256e0b70003e2d1f57083d83eaeaf5a095fc72b8a4e26'
             '2770cadf8ccf6b31aece6aee8f76dceb71e6e9d01fdf3be74c3743480ce34899'
             'de631ab199a6fe83b3f695350bffaad067a2f95fc2ba9c8fe57dc85665d3653c'
+            'SKIP'
+            'SKIP'
             '88c4994341b4de2a23929e31a98031cb94b6d42575f9d8fd6e120f61ae0c5747'
             '0f3dcb8b2d5f90f8ff2e77896d3b0ef6c87af8214e679917898e35dd678daef5'
             'e745aa71c903445c86639507256a5ca775e69b569b58f2ff48d6047703cfc81a')
@@ -140,6 +149,11 @@ prepare() {
     "10b78cc8cea65e7e77d227af4027963f39402724.patch" \
     "1709e8c656de69f6d823a3ae6773bf815e373909.patch" \
     "9e3d915d8ebf86e24c9ff58766be8e7c6aa7b0c0.patch"
+
+  # Objective C patches
+  apply_patch_with_msg \
+    "${objc_eh_commit_id}.patch" \
+    "${objc_export_commit_id}.patch"
 
   # Patch llvm
   cd "${srcdir}/llvm"
