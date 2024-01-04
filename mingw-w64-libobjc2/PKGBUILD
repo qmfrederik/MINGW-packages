@@ -1,0 +1,59 @@
+_realname=libobjc2
+pkgbase=mingw-w64-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+pkgver=2.2
+pkgrel=1
+pkgdesc="Objective-C runtime library intended for use with Clang."
+arch=(any)
+mingw_arch=('mingw64' 'ucrt64')
+url="https://github.com/gnustep/libobjc2"
+license=('spdx:MIT')
+depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs")
+makedepends=("${MINGW_PACKAGE_PREFIX}-clang"
+             "${MINGW_PACKAGE_PREFIX}-lld"
+             "${MINGW_PACKAGE_PREFIX}-cmake"
+             "${MINGW_PACKAGE_PREFIX}-ninja")
+source=("https://codeload.github.com/gnustep/libobjc2/tar.gz/refs/heads/master"
+        "https://patch-diff.githubusercontent.com/raw/gnustep/libobjc2/pull/267.patch")
+sha256sums=('SKIP'
+            'SKIP')
+
+prepare() {
+  cd ${_realname}-master
+  patch -p1 -i "${srcdir}"/267.patch
+}
+
+build() {
+  mkdir -p build-${MSYSTEM} && cd build-${MSYSTEM}
+
+  declare -a _extra_config
+  if check_option "debug" "n"; then
+    _extra_config+=("-DCMAKE_BUILD_TYPE=Release")
+  else
+    _extra_config+=("-DCMAKE_BUILD_TYPE=Debug")
+  fi
+
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
+  LDFLAGS="-fuse-ld=lld -lstdc++ -lgcc_s" \
+  ${MINGW_PREFIX}/bin/cmake \
+    -G Ninja \
+    -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+    -DCMAKE_CXX_COMPILER="clang" \
+    -DCMAKE_C_COMPILER="clang" \
+    "${_extra_config[@]}" \
+    ../${_realname}-master
+
+  ${MINGW_PREFIX}/bin/cmake --build .
+}
+
+package() {
+  cd ${srcdir}/build-${MSYSTEM}
+  DESTDIR="${pkgdir}" ${MINGW_PREFIX}/bin/cmake --install .
+
+  for pcfile in  "${pkgdir}${MINGW_PREFIX}"/lib/pkgconfig/*.pc; do
+    sed -s "s|${MINGW_PREFIX}|\${prefix}|g" -i "${pcfile}"
+    sed -i "1s|^|prefix=${MINGW_PREFIX}\\n|" "${pcfile}"
+  done
+
+  install -Dm644 ${srcdir}/${_realname}-master/LICENSE "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
+}
