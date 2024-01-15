@@ -32,7 +32,7 @@ _version=17.0.6
 _rc=
 _tag=llvmorg-${_version}${_rc}
 pkgver=${_version}${_rc/-/}
-pkgrel=6
+pkgrel=7
 pkgdesc="C language family frontend for LLVM (mingw-w64)"
 arch=('any')
 mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
@@ -72,7 +72,13 @@ source=("${_url}/llvm-${pkgver}.src.tar.xz"{,.sig}
         "0303-ignore-new-bfd-options.patch"
         https://github.com/llvm/llvm-project/commit/10b78cc8cea65e7e77d227af4027963f39402724.patch
         https://github.com/llvm/llvm-project/commit/1709e8c656de69f6d823a3ae6773bf815e373909.patch
-        https://github.com/llvm/llvm-project/commit/9e3d915d8ebf86e24c9ff58766be8e7c6aa7b0c0.patch)
+        https://github.com/llvm/llvm-project/commit/9e3d915d8ebf86e24c9ff58766be8e7c6aa7b0c0.patch
+        # Objective C: Use C++ mode unconditionally on MinGW
+        https://github.com/llvm/llvm-project/commit/b81ba52e15d95c3353489d4ce2f61c3771714c28.patch
+        # Objective C: Mark instance variable offsets with DllExport/DllImport when targetting COFF
+        https://github.com/llvm/llvm-project/commit/1d5106d69cf475215887c42834158d710e586f1b.patch
+        # Objective C: Avoid including '=' characters in type encodings
+        https://github.com/llvm/llvm-project/commit/3168192de567815c511e384707a3a5063b81189b.patch)
 # Some patch notes :)
 #0001-0099 -> llvm
 #0101-0199 -> clang
@@ -102,7 +108,10 @@ sha256sums=('b638167da139126ca11917b6880207cc6e8f9d1cbb1a48d87d017f697ef78188'
             'de631ab199a6fe83b3f695350bffaad067a2f95fc2ba9c8fe57dc85665d3653c'
             '88c4994341b4de2a23929e31a98031cb94b6d42575f9d8fd6e120f61ae0c5747'
             '0f3dcb8b2d5f90f8ff2e77896d3b0ef6c87af8214e679917898e35dd678daef5'
-            'e745aa71c903445c86639507256a5ca775e69b569b58f2ff48d6047703cfc81a')
+            'e745aa71c903445c86639507256a5ca775e69b569b58f2ff48d6047703cfc81a',
+            'b23427a58ddf2f8fd16605ab9cc89d1233a409ee0a208f6d8d1a34204f716426',
+            'b6095ce7fa2d0afa4135d6fc4375d4ca4b9f39ac27378d05ea76cf6dfd6676f1',
+            '20ae13b30edcf257d5bebb4226b27d55899899657b4cab885c03b780162881cb')
 validpgpkeys=('B6C8F98282B944E3B0D5C2530FC3042E345AD05D'  # Hans Wennborg, Google.
               '474E22316ABF4785A88C6E8EA2C794A986419D8A'  # Tom Stellard
               'D574BD5D1D0E98895E3BF90044F2485E45D59042') # Tobias Hieta
@@ -140,6 +149,12 @@ prepare() {
     "10b78cc8cea65e7e77d227af4027963f39402724.patch" \
     "1709e8c656de69f6d823a3ae6773bf815e373909.patch" \
     "9e3d915d8ebf86e24c9ff58766be8e7c6aa7b0c0.patch"
+
+  # Backports for clang, for impoved compat when compiling Objective-C code
+  apply_patch_with_msg \
+    "b81ba52e15d95c3353489d4ce2f61c3771714c28.patch" \
+    "1d5106d69cf475215887c42834158d710e586f1b.patch" \
+    "3168192de567815c511e384707a3a5063b81189b.patch"
 
   # Patch llvm
   cd "${srcdir}/llvm"
