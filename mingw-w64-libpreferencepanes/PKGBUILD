@@ -1,0 +1,48 @@
+# Maintainer: Frederik Carlier <frederik.carlier@keysight.com>
+
+_realname=apps-systempreferences
+_commit="84df2b6f8fef6d916b0cd154f4fbfec57b8d9edc"
+pkgbase=mingw-w64-${_realname}
+# Using same naming convention as Ubuntu: https://packages.ubuntu.com/noble/libpreferencepanes1
+pkgname=("${MINGW_PACKAGE_PREFIX}-libpreferencepanes")
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="GNUstep preferences library - runtime library (mingw-w64)"
+arch=('any')
+mingw_arch=('mingw64' 'ucrt64')
+url='https://gnustep.github.org/'
+license=('LGPL-2.1-or-later')
+makedepends=("${MINGW_PACKAGE_PREFIX}-autotools"
+             "${MINGW_PACKAGE_PREFIX}-clang"
+             "${MINGW_PACKAGE_PREFIX}-lld"
+             "${MINGW_PACKAGE_PREFIX}-gnustep-make"
+             rsync)
+depends=("${MINGW_PACKAGE_PREFIX}-gnustep-gui")
+# No stable version yet
+source=("https://github.com/gnustep/${_realname}/archive/${_commit}.tar.gz")
+sha256sums=('eeed8c15687902b465cc8f319617116226bbaded4b47eb31b8ed6582f378af2c')
+
+prepare() {
+  cd "${srcdir}/${_realname}-${_commit}"
+}
+
+build() {
+  rsync --recursive --times --links "${srcdir}/${_realname}-${_commit}"/* "${srcdir}/build-${MSYSTEM}"
+  cd "${srcdir}/build-${MSYSTEM}"
+
+  CC="$MINGW_PREFIX/bin/clang" \
+  CXX="$MINGW_PREFIX/bin/clang++" \
+  make
+}
+
+check() {
+  cd "${srcdir}/build-${MSYSTEM}"
+}
+
+package() {
+  cd "${srcdir}/build-${MSYSTEM}"
+
+  make install DESTDIR="${pkgdir}"
+
+  install -Dm644 "${srcdir}/${_realname}-${_commit}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING"
+}
