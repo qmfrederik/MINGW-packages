@@ -1,0 +1,56 @@
+# Maintainer: Frederik Carlier <frederik.carlier@keysight.com>
+
+_realname=plugins-themes-WinUXTheme
+_commit="1d9a37136b8dfc6dcea811ef28defbe52f954d0d"
+pkgbase=mingw-w64-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-gnustep-windows-theme")
+pkgver=0.0.0
+pkgrel=1
+pkgdesc="Win32 native widgets theme for GNUstep (mingw-w64)"
+arch=('any')
+mingw_arch=('mingw64' 'ucrt64')
+url='https://gnustep.github.org/'
+license=('LGPL-2.1-or-later')
+makedepends=("${MINGW_PACKAGE_PREFIX}-autotools"
+             "${MINGW_PACKAGE_PREFIX}-clang"
+             "${MINGW_PACKAGE_PREFIX}-lld"
+             "${MINGW_PACKAGE_PREFIX}-gnustep-make"
+             rsync)
+depends=("${MINGW_PACKAGE_PREFIX}-gnustep-gui")
+# No stable version yet
+source=("https://github.com/gnustep/${_realname}/archive/${_commit}.tar.gz"
+        # Use calloc, free; the objc_ variants are deprecated
+        "https://github.com/gnustep/plugins-themes-WinUXTheme/pull/1/commits/b35a9a54cca81ac669765226ca42cd601f54d42d.patch"
+        # Add LGPL v2.1 license file
+        "https://github.com/gnustep/plugins-themes-WinUXTheme/pull/2/commits/7dbace8d22dc3cd972d45f725995f2757a01ab2d.patch")
+sha256sums=('a1d197d1e6c0d185c6ca62c58b1ec1c8be5a2fe8c83917a05a3090a3081fe5e7'
+            'fb1701ec3276e0d505100b74995524bfb965a68c31d6e9871969b4d5b1e14949'
+            '7f7759cd161da8d27ec1ab298f578edd190443fe9075dc8430fbd3003a3196d0')
+
+prepare() {
+  cd "${srcdir}/${_realname}-${_commit}"
+
+  patch -p1 -i ${srcdir}/b35a9a54cca81ac669765226ca42cd601f54d42d.patch
+  patch -p1 -i ${srcdir}/7dbace8d22dc3cd972d45f725995f2757a01ab2d.patch
+}
+
+build() {
+  rsync --recursive --times --links "${srcdir}/${_realname}-${_commit}"/* "${srcdir}/build-${MSYSTEM}"
+  cd "${srcdir}/build-${MSYSTEM}"
+
+  CC="$MINGW_PREFIX/bin/clang" \
+  CXX="$MINGW_PREFIX/bin/clang++" \
+  make
+}
+
+check() {
+  cd "${srcdir}/build-${MSYSTEM}"
+}
+
+package() {
+  cd "${srcdir}/build-${MSYSTEM}"
+
+  make install DESTDIR="${pkgdir}"
+
+  install -Dm644 "${srcdir}/${_realname}-${_commit}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING"
+}
