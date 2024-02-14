@@ -7,7 +7,7 @@ pkgver=1.29.0
 pkgrel=3
 pkgdesc="GNUstep Base library (mingw-w64)"
 arch=('any')
-mingw_arch=('mingw64' 'ucrt64')
+mingw_arch=('mingw64' 'ucrt64' 'clang64')
 url='https://gnustep.github.org/'
 license=('spdx:LGPL-2.1-or-later')
 makedepends=("${MINGW_PACKAGE_PREFIX}-autotools"
@@ -59,17 +59,9 @@ build() {
   rsync --recursive --times --links "${srcdir}/${_realname}-${pkgver}"/* "${srcdir}/build-${MSYSTEM}"
   cd "${srcdir}/build-${MSYSTEM}"
 
-  case ${MSYSTEM} in
-    MINGW*|UCRT*)
-      export LDFLAGS="-fuse-ld=lld -lstdc++ -lgcc_s"
-      ;;
-    CLANG*)
-      export LDFLAGS="-lc++"
-      ;;
-  esac
-
   CC="$MINGW_PREFIX/bin/clang" \
   CXX="$MINGW_PREFIX/bin/clang++" \
+  LDFLAGS="-fuse-ld=lld" \
   ./configure \
     --prefix="${MINGW_PREFIX}" \
     --build="${MINGW_CHOST}" \
@@ -83,6 +75,8 @@ build() {
 
 check() {
   cd "${srcdir}/build-${MSYSTEM}"
+
+  make check
 }
 
 package() {
